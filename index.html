@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пульт управления машинкой (STM32 + E104-BT02)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        button {
+            background-color: #1f1f1f;
+            color: white;
+            border: 2px solid #00ffcc;
+            font-size: 18px;
+            padding: 20px;
+            margin: 5px;
+            border-radius: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-weight: bold;
+        }
+        button:active, button.pressed {
+            background-color: #00ffcc;
+            color: #121212;
+        }
+        #connectBtn {
+            background-color: #00ffcc;
+            color: #121212;
+            font-size: 16px;
+            padding: 12px 24px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 110px);
+            grid-gap: 12px;
+            justify-content: center;
+        }
+        .empty { visibility: hidden; }
+        #status {
+            margin-top: 25px;
+            color: #888;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="connectBtn" onclick="connectBluetooth()">🔗 Подключить Bluetooth</button>
+
+    <div class="controls">
+        <div class="empty"></div>
+        <button onmousedown="sendCmd('F')" ontouchstart="sendCmd('F')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">▲<br>Вперед</button>
+        <div class="empty"></div>
+        
+        <button onmousedown="sendCmd('L')" ontouchstart="sendCmd('L')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">◀<br>Влево</button>
+        <button onmousedown="sendCmd('S')" ontouchstart="sendCmd('S')">⏹<br>Стоп</button>
+        <button onmousedown="sendCmd('R')" ontouchstart="sendCmd('R')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">▶<br>Вправо</button>
+        
+        <div class="empty"></div>
+        <button onmousedown="sendCmd('B')" ontouchstart="sendCmd('B')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">▼<br>Назад</button>
+        <div class="empty"></div>
+    </div>
+
+    <p id="status">Статус: не подключено</p>
+
+    <script>
+        let bluetoothDevice;
+        let bluetoothCharacteristic;
+
+        // Стандартные UUID для прозрачных BLE UART модулей ( Nordic UART Service )
+        const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"; 
+        const CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+
+        async function connectBluetooth() {
+            try {
+                document.getElementById('status').innerText = "Статус: поиск устройства...";
+                
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                const server = await bluetoothDevice.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                bluetoothCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                document.getElementById('status').innerText = "Статус: Подключено к " + bluetoothDevice.name;
+                let btn = document.getElementById('connectBtn');
+                btn.innerText = "✓ Подключено";
+                btn.style.backgroundColor = "#00cc66";
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerText = "Статус: ошибка подключения или отменено";
+            }
+        }
+
+        async function sendCmd(cmd) {
+            if (!bluetoothCharacteristic) {
+                console.log("Bluetooth не подключен");
+                return;
+            }
+            try {
+                const encoder = new TextEncoder();
+                await bluetoothCharacteristic.writeValue(encoder.encode(cmd));
+            } catch (error) {
+                console.error("Ошибка отправки: ", error);
+            }
+        }
+    </script>
+</body>
+</html>
