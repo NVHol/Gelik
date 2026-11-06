@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Пульт управления машинкой (STM32 + E104-BT02)</title>
+    <title>Пульт управления машиной (STM32)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,22 +13,35 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             user-select: none;
             -webkit-user-select: none;
         }
+        h2 { margin: 5px 0 15px 0; font-size: 18px; color: #00ffcc; text-align: center;}
+        .section {
+            background: #1f1f1f;
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px;
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         button {
-            background-color: #1f1f1f;
+            background-color: #2a2a2a;
             color: white;
             border: 2px solid #00ffcc;
-            font-size: 18px;
-            padding: 20px;
+            font-size: 16px;
+            padding: 15px;
             margin: 5px;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             touch-action: manipulation;
             font-weight: bold;
+            width: 100%;
         }
         button:active, button.pressed {
             background-color: #00ffcc;
@@ -38,19 +51,18 @@
             background-color: #00ffcc;
             color: #121212;
             font-size: 16px;
-            padding: 12px 24px;
-            margin-bottom: 30px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
             border-radius: 8px;
+            width: auto;
         }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 110px);
-            grid-gap: 12px;
-            justify-content: center;
+        .row {
+            display: flex;
+            gap: 5px;
+            width: 100%;
         }
-        .empty { visibility: hidden; }
         #status {
-            margin-top: 25px;
+            margin-top: 20px;
             color: #888;
             font-size: 14px;
             text-align: center;
@@ -61,18 +73,22 @@
 
     <button id="connectBtn" onclick="connectBluetooth()">🔗 Подключить Bluetooth</button>
 
-    <div class="controls">
-        <div class="empty"></div>
-        <button onmousedown="sendCmd('F')" ontouchstart="sendCmd('F')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">▲<br>Вперед</button>
-        <div class="empty"></div>
-        
-        <button onmousedown="sendCmd('L')" ontouchstart="sendCmd('L')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">◀<br>Влево</button>
-        <button onmousedown="sendCmd('S')" ontouchstart="sendCmd('S')">⏹<br>Стоп</button>
-        <button onmousedown="sendCmd('R')" ontouchstart="sendCmd('R')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">▶<br>Вправо</button>
-        
-        <div class="empty"></div>
-        <button onmousedown="sendCmd('B')" ontouchstart="sendCmd('B')" onmouseup="sendCmd('S')" ontouchend="sendCmd('S')">▼<br>Назад</button>
-        <div class="empty"></div>
+    <!-- Управление мотором (Команды 4, 5, 6) -->
+    <div class="section">
+        <h2>Мотор (Движение)</h2>
+        <button onmousedown="sendCmd('4')" ontouchstart="sendCmd('4')" onmouseup="sendCmd('6')" ontouchend="sendCmd('6')">▲ Вперед (Команда 4)</button>
+        <button onmousedown="sendCmd('5')" ontouchstart="sendCmd('5')" onmouseup="sendCmd('6')" ontouchend="sendCmd('6')">▼ Назад (Команда 5)</button>
+        <button onclick="sendCmd('6')">⏹ Стоп / Сброс (Команда 6)</button>
+    </div>
+
+    <!-- Управление сервоприводом / Рулевым управлением (Команды 1, 2, 3) -->
+    <div class="section">
+        <h2>Руль / Сервопривод</h2>
+        <div class="row">
+            <button onclick="sendCmd('1')">◀ Влево<br>(60°)</button>
+            <button onclick="sendCmd('2')">● Центр<br>(90°)</button>
+            <button onclick="sendCmd('3')">▶ Вправо<br>(120°)</button>
+        </div>
     </div>
 
     <p id="status">Статус: не подключено</p>
@@ -81,7 +97,7 @@
         let bluetoothDevice;
         let bluetoothCharacteristic;
 
-        // Стандартные UUID для прозрачных BLE UART модулей ( Nordic UART Service )
+        // Стандартные UUID для прозрачных BLE UART модулей (E104-BT02 / Nordic UART)
         const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"; 
         const CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
