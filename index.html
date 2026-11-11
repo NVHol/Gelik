@@ -97,7 +97,7 @@
         let bluetoothDevice;
         let bluetoothCharacteristic;
 
-        // Стандартные UUID для прозрачных BLE UART модулей (E104-BT02 / Nordic UART)
+        // Стандартные UUID для прозрачных BLE UART модулей (E104-BT40 / Nordic UART)
         const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"; 
         const CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
@@ -105,8 +105,9 @@
             try {
                 document.getElementById('status').innerText = "Статус: поиск устройства...";
                 
+                // Фильтруем по имени BLE-модуля (например, 'CDEBYTE' или можно заменить на точное имя с первого фото)
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
+                    filters: [{ namePrefix: 'CDEBYTE' }],
                     optionalServices: [SERVICE_UUID]
                 });
 
